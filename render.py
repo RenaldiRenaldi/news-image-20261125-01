@@ -1,5 +1,4 @@
 from PIL import Image, ImageDraw, ImageFont
-import math
 
 W = H = 1024
 NAVY = (17, 38, 70)
@@ -13,125 +12,130 @@ LAND = (224, 228, 232)
 WHITE = (255, 255, 255)
 
 def font(size, bold=False):
-    name = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    return ImageFont.truetype(name, size)
+    path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    return ImageFont.truetype(path, size)
 
-def fit_text(draw, text, max_width, start, bold=False):
-    s = start
-    while s > 8 and draw.textbbox((0,0), text, font=font(s,bold))[2] > max_width:
-        s -= 1
-    return font(s,bold)
+def fit_text(draw, text, width, start, bold=False):
+    size = start
+    while size > 7 and draw.textbbox((0, 0), text, font=font(size, bold))[2] > width:
+        size -= 1
+    return font(size, bold)
 
 def wrap(draw, text, f, width):
-    words, lines, line = text.split(), [], ""
-    for word in words:
-        test = (line + " " + word).strip()
-        if draw.textbbox((0,0), test, font=f)[2] <= width: line = test
+    lines, line = [], ""
+    for word in text.split():
+        trial = (line + " " + word).strip()
+        if draw.textbbox((0, 0), trial, font=f)[2] <= width:
+            line = trial
         else:
-            if line: lines.append(line)
+            if line:
+                lines.append(line)
             line = word
-    if line: lines.append(line)
+    if line:
+        lines.append(line)
     return lines
 
-def txt(draw, xy, text, f, fill=INK, spacing=2, width=None):
-    if width:
-        y = xy[1]
-        for line in wrap(draw,text,f,width):
-            draw.text((xy[0],y),line,font=f,fill=fill)
-            y += f.size + spacing
-        return y
-    draw.text(xy,text,font=f,fill=fill)
+def txt(draw, xy, text, f, fill=INK, spacing=1, width=None):
+    if width is None:
+        draw.text(xy, text, font=f, fill=fill)
+        return
+    y = xy[1]
+    for line in wrap(draw, text, f, width):
+        draw.text((xy[0], y), line, font=f, fill=fill)
+        y += f.size + spacing
 
-def card_icon(d, x, y, kind):
-    # Each card gets a small, distinct two-to-four shape illustration.
-    if kind == 0: # chip
-        d.rounded_rectangle((x+10,y+7,x+42,y+37),5,fill=BLUE,outline=NAVY,width=2)
-        for i in range(4):
-            d.line((x+5+i*10,y+2,x+5+i*10,y+7),fill=RED,width=2)
-            d.line((x+5+i*10,y+37,x+5+i*10,y+42),fill=RED,width=2)
-        d.rectangle((x+20,y+16,x+31,y+27),fill=GOLD)
-    elif kind == 1: # bar chart
-        d.line((x+8,y+40,x+8,y+5),fill=NAVY,width=3); d.line((x+8,y+40,x+48,y+40),fill=NAVY,width=3)
-        for i,h in enumerate((15,27,34)): d.rectangle((x+14+i*11,y+40-h,x+22+i*11,y+40),fill=(BLUE if i<2 else RED))
-    elif kind == 2: # drone/tower
-        d.rectangle((x+24,y+8,x+39,y+38),fill=RED); d.line((x+31,y+38,x+31,y+44),fill=NAVY,width=2)
-        d.ellipse((x+5,y+16,x+20,y+25),outline=BLUE,width=3); d.line((x+20,y+20,x+29,y+20),fill=BLUE,width=2)
-    elif kind == 3: # ship
-        d.polygon([(x+5,y+27),(x+46,y+27),(x+37,y+38),(x+14,y+38)],fill=BLUE)
-        d.line((x+25,y+27,x+25,y+8),fill=NAVY,width=2); d.polygon([(x+26,y+9),(x+41,y+17),(x+26,y+20)],fill=GOLD)
-    elif kind == 4: # shield
-        d.polygon([(x+27,y+5),(x+45,y+12),(x+42,y+29),(x+27,y+41),(x+12,y+29),(x+9,y+12)],fill=BLUE)
-        d.line((x+19,y+23,x+25,y+29),fill=WHITE,width=3); d.line((x+25,y+29,x+36,y+16),fill=WHITE,width=3)
-    elif kind == 5: # virus
-        d.ellipse((x+13,y+10,x+41,y+38),fill=RED)
-        for a in range(0,360,60):
-            xx,yy=x+27+20*math.cos(math.radians(a)),y+24+20*math.sin(math.radians(a)); d.ellipse((xx-3,yy-3,xx+3,yy+3),fill=GOLD)
-    elif kind == 6: # ballot
-        d.rectangle((x+10,y+8,x+44,y+39),outline=NAVY,width=3,fill=WHITE); d.line((x+17,y+16,x+37,y+16),fill=BLUE,width=2); d.line((x+17,y+24,x+37,y+24),fill=BLUE,width=2); d.line((x+17,y+32,x+30,y+32),fill=RED,width=2)
-    elif kind == 7: # plane/radar
-        d.arc((x+5,y+7,x+48,y+49),210,330,fill=BLUE,width=2); d.line((x+27,y+29,x+45,y+11),fill=RED,width=3); d.ellipse((x+23,y+25,x+31,y+33),fill=GOLD)
-    elif kind == 8: # flame/gas
-        d.polygon([(x+26,y+42),(x+12,y+29),(x+18,y+10),(x+28,y+20),(x+37,y+5),(x+44,y+28)],fill=RED)
-        d.ellipse((x+23,y+26,x+34,y+39),fill=GOLD)
-    elif kind == 9: # sports
-        d.ellipse((x+10,y+8,x+40,y+38),fill=GOLD,outline=NAVY,width=2); d.arc((x+15,y+13,x+35,y+33),30,210,fill=BLUE,width=2); d.arc((x+15,y+13,x+35,y+33),210,350,fill=RED,width=2)
-    elif kind == 10: # coral
-        d.line((x+27,y+40,x+27,y+16),fill=RED,width=4); d.line((x+27,y+27,x+15,y+16),fill=RED,width=3); d.line((x+27,y+30,x+39,y+18),fill=RED,width=3); d.ellipse((x+8,y+36,x+46,y+43),fill=BLUE)
-    elif kind == 11: # eye/telescope
-        d.ellipse((x+8,y+14,x+45,y+36),outline=BLUE,width=3); d.ellipse((x+23,y+20,x+31,y+28),fill=RED); d.line((x+27,y+36,x+27,y+44),fill=NAVY,width=3)
-    else: # courthouse
-        d.polygon([(x+8,y+15),(x+27,y+5),(x+46,y+15)],fill=GOLD); d.rectangle((x+11,y+17,x+43,y+38),outline=NAVY,width=2)
-        for xx in (x+16,x+26,x+36): d.line((xx,y+19,xx,y+36),fill=BLUE,width=2)
+def card_icon(draw, x, y, kind):
+    colors = [BLUE, RED, GOLD, NAVY]
+    c = colors[kind % len(colors)]
+    draw.rectangle((x + 9, y + 10, x + 36, y + 31), fill=c)
+    draw.line((x + 5, y + 35, x + 42, y + 35), fill=NAVY, width=2)
+    draw.line((x + 13, y + 6, x + 13, y + 10), fill=RED, width=2)
+    draw.line((x + 30, y + 6, x + 30, y + 10), fill=RED, width=2)
 
 def main():
-    im=Image.new("RGB",(W,H),WHITE); d=ImageDraw.Draw(im)
-    # Masthead
-    title="Wednesday 25 November 2026: US spy agencies hacked, 700,000 Russian dead, Huawei convicted — 38 stories, 9 regions"
-    tf=fit_text(d,title,970,31,True); txt(d,(26,18),title,tf,NAVY)
-    txt(d,(28,62),"THE WORLD IN ONE DAY  /  VERIFIED NEWS SLATE  /  ESTIMATES AND CLAIMS LABELLED",font(13,True),MUTED)
-    txt(d,(28,84),"Wednesday 25 Nov 2026  •  38 stories  •  9 regions  •  18 fields",font(16,True),INK)
-    d.rectangle((26,113,998,119),fill=GOLD)
-    # Lead panel
-    d.rounded_rectangle((26,132,998,355),8,fill=PALE,outline=(210,216,223),width=2)
-    txt(d,(44,145),"LEAD  /  CYBER + INTELLIGENCE",font(14,True),RED)
-    lf=fit_text(d,"CIA + ODNI hacked",550,42,True); txt(d,(44,169),"CIA + ODNI hacked",lf,NAVY)
-    txt(d,(46,226),"US spy agencies' unclassified intel system was breached.",font(18,True),INK)
-    txt(d,(46,255),"Officials say no classified information or critical capabilities were affected.",font(15),MUTED,width=610)
-    txt(d,(46,285),"First reported by The New York Times; CNN, 24 Nov.  Map: Langley, Virginia.",font(14),MUTED,width=610)
-    # data chart
-    d.line((705,300,950,300),fill=NAVY,width=2)
-    for i,(lab,val,col) in enumerate([("OPEN-SOURCE",78,BLUE),("CLASSIFIED",4,RED),("CAPABILITIES",18,GOLD)]):
-        x=715+i*78; d.rectangle((x,300-val,x+38,300),fill=col); txt(d,(x-5,306),lab,font(8,True),MUTED)
-    txt(d,(706,156),"IMPACT CHECK",font(12,True),NAVY); txt(d,(706,176),"unclassified hit",font(17,True),BLUE); txt(d,(706,202),"classified systems safe",font(14,True),RED)
-    # co-leads
-    d.rounded_rectangle((26,368,998,487),8,fill=WHITE,outline=(210,216,223),width=2)
-    txt(d,(44,380),"CO-LEADS",font(14,True),RED)
-    cols=[(44,"700,000+ killed, analysis finds","Modelled estimate: 490k registered; >700k estimated since Feb 2022."),(366,"Huawei guilty on 10 of 12 counts","New York jury: bank fraud and trade-secrets theft, 24 Nov."),(688,"Houthis hit Riyadh tower","Drone strike on PIF HQ; at least 11 hurt, second strike in <1 week.")]
-    for x,head,body in cols:
-        hf=fit_text(d,head,270,20,True); txt(d,(x,410),head,hf,NAVY); txt(d,(x,438),body,font(12),MUTED,width=270)
-    # map
-    d.rounded_rectangle((26,500,998,715),8,fill=(249,250,251),outline=(210,216,223),width=2)
-    txt(d,(44,511),"38 STORIES / 9 REGIONS",font(13,True),NAVY)
-    # graticule
-    for gy in range(545,690,36): d.line((55,gy,970,gy),fill=(215,220,225),width=1)
-    for gx in range(100,951,85): d.line((gx,535,gx,695),fill=(225,229,233),width=1)
-    # coarse but geographically placed land silhouettes
-    land=[[(70,570),(130,548),(205,550),(250,580),(230,610),(180,615),(145,640),(115,625)],[(285,555),(345,545),(395,560),(425,585),(410,625),(370,650),(335,625),(300,600)],[(455,548),(505,545),(550,560),(590,585),(620,600),(650,590),(700,610),(745,600),(790,625),(850,615),(900,630),(940,660),(900,680),(820,675),(755,665),(700,680),(630,660),(580,645),(525,625),(480,595)],[(760,545),(800,535),(835,555),(820,580),(785,590)],[(855,650),(920,655),(950,680),(900,692),(850,680)]]
-    for poly in land: d.polygon(poly,fill=LAND,outline=(125,135,145))
-    dots=[(155,570,"1 Langley"),(333,570,"2 Moscow/Kyiv"),(210,602,"3 New York"),(648,618,"4 Riyadh"),(515,552,"5 Gulf"),(590,610,"6 Hormuz"),(515,645,"7 Akwe"),(430,565,"8 Warsaw"),(465,555,"9 Copenhagen"),(450,580,"10 Paris"),(710,650,"11 Benghazi"),(240,625,"12 Caracas"),(870,672,"13 Canberra")]
-    for i,(x,y,label) in enumerate(dots):
-        d.ellipse((x-7,y-7,x+7,y+7),fill=RED,outline=WHITE,width=2); d.text((x+10,y-8),label,font=font(11,True),fill=NAVY)
-    # cards
-    cards=[("Nvidia slides 7.5%","$152.76 after Monday's surge"),("Sparta II strike confirmed","Ukraine says cargo ship carried weapons"),("Kyiv block death toll 11","Russian drone attack rescue"),("Iran tanker report","IRGC claim; US denies; unverified"),("WHO evacuates Akwe","Ebola team moved amid fighting"),("NATO AWACS to Poland","Forward deployment after missiles"),("Denmark ghetto law upheld","91 leases case, unanimous court"),("Sarkozy to trial","Corruption hearing set for Apr 2027"),("Giuliani gets medal","Trump awards civilian honour"),("O'Hare radar outage","Flights delayed on Thanksgiving eve"),("Dell lifts forecast","Record AI server quarter"),("England level T20 series","Beat Australia by 8 wickets"),("COP31 aftermath","No deal; 90+ nations sign pledge"),("Venezuela debt report","Public debt reported at $237.5B")]
-    x0,y0=26,724; cw,ch=238,66
-    for i,(head,body) in enumerate(cards):
-        col=i%4; row=i//4; x=x0+col*246; y=y0+row*70
-        d.rounded_rectangle((x,y,x+cw,y+ch),6,fill=WHITE,outline=(210,216,223),width=2)
-        card_icon(d,x+5,y+12,i)
-        hf=fit_text(d,head,177,13,True); txt(d,(x+58,y+7),head,hf,NAVY); txt(d,(x+58,y+29),body,font(9),MUTED,width=170)
-    # footer
-    d.rectangle((26,1000,998,1003),fill=GOLD)
-    txt(d,(28,1007),"38 STORIES  •  9 REGIONS  •  18 FIELDS  |  Estimates and unverified claims are marked",font(10,True),MUTED)
-    im.save("entry.png",format="PNG",optimize=True)
+    im = Image.new("RGB", (W, H), WHITE)
+    d = ImageDraw.Draw(im)
+    title = "Wednesday 25 November 2026: US spy agencies hacked, 700,000 Russian dead, Huawei convicted - 38 stories, 9 regions"
+    txt(d, (24, 14), title, fit_text(d, title, 976, 29, True), NAVY)
+    txt(d, (26, 53), "THE WORLD IN ONE DAY  /  VERIFIED NEWS SLATE  /  ESTIMATES AND CLAIMS LABELLED", font(12, True), MUTED)
+    txt(d, (26, 72), "Wednesday 25 Nov 2026  /  38 stories  /  9 regions", font(15, True), INK)
+    d.rectangle((24, 96, 1000, 101), fill=GOLD)
+    d.rounded_rectangle((24, 112, 1000, 258), 8, fill=PALE, outline=(210, 216, 223), width=2)
+    txt(d, (40, 122), "LEAD  /  CYBER + INTELLIGENCE", font(12, True), RED)
+    txt(d, (40, 145), "CIA + ODNI hacked", fit_text(d, "CIA + ODNI hacked", 570, 38, True), NAVY)
+    txt(d, (42, 188), "ARTEX tool used; NGA also affected; FinCEN reports a separate incident.", font(14, True), INK, width=650)
+    txt(d, (42, 211), "Early signs point to China; no official attribution. Patched and resolved; no classified systems or critical capabilities disrupted.", font(11), MUTED, width=650)
+    txt(d, (42, 235), "First reported by The New York Times; CNN, 24 Nov.  Map: Langley, Virginia.  Sources: NYT / CNN / AP", font(10), MUTED, width=690)
+    d.rectangle((760, 140, 968, 235), fill=WHITE, outline=(210, 216, 223), width=1)
+    txt(d, (774, 149), "IMPACT CHECK", font(11, True), NAVY)
+    txt(d, (774, 172), "UNCLASSIFIED", font(15, True), BLUE)
+    txt(d, (774, 193), "patched / resolved", font(10), MUTED)
+    txt(d, (774, 215), "critical + classified safe", font(10, True), RED)
+    d.rounded_rectangle((24, 270, 1000, 354), 8, fill=WHITE, outline=(210, 216, 223), width=2)
+    txt(d, (40, 279), "CO-LEADS", font(12, True), RED)
+    cols = [(40, "700,000+ Russian dead", "490,334 registered; modelled total over 700,000 since Feb 2022.  BBC / Mediazona"), (365, "Huawei guilty on 10 of 12", "Bank, wire, sanctions and trade-secrets counts; racketeering acquitted.  Reuters"), (690, "Houthis: Riyadh, then Ras Tanura", "Tuesday's PIF tower strike hurt 11; refinery attack claimed today, fires reported.  Just Security")]
+    for x, head, body in cols:
+        txt(d, (x, 302), head, fit_text(d, head, 285, 16, True), NAVY)
+        txt(d, (x, 326), body, font(9), MUTED, width=285)
+    d.rounded_rectangle((24, 365, 1000, 425), 8, fill=NAVY, outline=NAVY, width=1)
+    txt(d, (40, 374), "THE DAY IN NUMBERS", font(11, True), WHITE)
+    figures = [("490,334", "registered dead"), ("-6.16%", "KOSPI close"), ("$54.9B", "Dell revenue"), ("50,018.70", "Dow first 50k close"), ("11", "Riyadh hurt"), ("2", "Hormuz claim")]
+    for i, (num, lab) in enumerate(figures):
+        x = 188 + i * 132
+        txt(d, (x, 371), num, fit_text(d, num, 118, 18, True), GOLD)
+        txt(d, (x, 399), lab, font(9, True), WHITE, width=120)
+    d.rounded_rectangle((24, 436, 1000, 624), 8, fill=(249, 250, 251), outline=(210, 216, 223), width=2)
+    txt(d, (40, 445), "WORLD MAP  /  30 DEGREE GRATICULE  /  13 VERIFIED LOCATIONS", font(11, True), NAVY)
+    mx0, my0, mw, mh = 45, 463, 934, 145
+    def project(lon, lat):
+        return (mx0 + (lon + 180) / 360 * mw, my0 + (90 - lat) / 180 * mh)
+    for lon in range(-180, 181, 30):
+        x, _ = project(lon, 0)
+        d.line((x, my0, x, my0 + mh), fill=(222, 226, 230), width=1)
+    for lat in range(-60, 91, 30):
+        _, y = project(0, lat)
+        d.line((mx0, y, mx0 + mw, y), fill=(222, 226, 230), width=1)
+    coastlines = [
+        [(-168, 66), (-150, 60), (-140, 58), (-130, 52), (-125, 48), (-124, 40), (-117, 32), (-110, 24), (-100, 18), (-90, 20), (-82, 27), (-80, 32), (-75, 40), (-68, 45), (-60, 50), (-58, 57), (-70, 62), (-95, 70), (-125, 72), (-150, 70)],
+        [(-81, 12), (-78, 3), (-80, -5), (-75, -14), (-72, -22), (-68, -32), (-64, -43), (-58, -52), (-50, -55), (-42, -48), (-38, -34), (-35, -20), (-42, -8), (-50, 2), (-60, 8), (-70, 12)],
+        [(-10, 35), (0, 37), (10, 44), (20, 45), (30, 42), (40, 45), (55, 52), (70, 55), (85, 55), (100, 52), (115, 50), (130, 45), (145, 42), (155, 50), (170, 55), (178, 65), (160, 70), (140, 68), (120, 72), (90, 72), (60, 68), (35, 65), (15, 60), (0, 55), (-10, 50), (-10, 42)],
+        [(-18, 35), (-5, 35), (8, 33), (18, 28), (30, 31), (38, 22), (44, 10), (42, -2), (35, -12), (30, -22), (20, -34), (10, -35), (0, -30), (-8, -20), (-15, -5), (-20, 10)],
+        [(112, -11), (120, -18), (130, -27), (140, -35), (150, -38), (153, -28), (146, -20), (135, -15), (125, -12)],
+        [(-55, 83), (-35, 84), (-20, 78), (-42, 70), (-55, 72)],
+    ]
+    for coast in coastlines:
+        d.polygon([project(lon, lat) for lon, lat in coast], fill=LAND, outline=(125, 135, 145))
+    labels = [("NORTH AMERICA", -125, 18), ("SOUTH AMERICA", -62, -38), ("EUROPE", 18, 60), ("AFRICA", 20, -27), ("ASIA", 92, 34), ("OCEANIA", 137, -45)]
+    for lab, lon, lat in labels:
+        x, y = project(lon, lat)
+        txt(d, (x, y), lab, font(9, True), BLUE)
+    dots = [("1 Langley", -77.4, 38.9, 10, -10), ("2 Moscow", 37.6, 55.8, 10, -17), ("3 Kyiv", 30.5, 50.4, 10, 5), ("4 New York", -74.0, 40.7, 10, 7), ("5 Riyadh", 46.7, 24.7, 10, 7), ("6 Hormuz", 56.3, 26.6, 10, -16), ("7 Akwe", 29.5, 1.5, 10, 7), ("8 Warsaw", 21.0, 52.2, -50, -18), ("9 Copenhagen", 12.6, 55.7, -62, -3), ("10 Paris", 2.35, 48.9, -48, 12), ("11 Benghazi", 20.1, 32.1, 10, 7), ("12 Caracas", -66.9, 10.5, 10, 7), ("13 Canberra", 149.1, -35.3, 10, 7)]
+    for label, lon, lat, dx, dy in dots:
+        x, y = project(lon, lat)
+        d.ellipse((x - 4, y - 4, x + 4, y + 4), fill=RED, outline=WHITE, width=1)
+        if dx < 0:
+            d.line((x, y, x + dx + 44, y + dy + 5), fill=RED, width=1)
+        txt(d, (x + dx, y + dy), label, font(8, True), NAVY)
+    cards = [("Nvidia -5.9%", "Monday +31.5%; chip sell-off spreads"), ("Two tankers hit Hormuz", "IRGC says mines; not confirmed"), ("Dell doubles sales", "$54.9B, +103%; AI backlog $132B"), ("Ukraine hits two refineries", "Syzran and Kuibyshev ablaze; 1 killed"), ("Kyiv block death toll 11", "Russian drone attack rescue"), ("WHO evacuates Akwe", "Ebola team moved amid fighting"), ("NATO AWACS to Poland", "Forward deployment after missiles"), ("Denmark ghetto law upheld", "Supreme Court, 91 leases"), ("Sarkozy to trial", "Corruption hearing set for Apr 2027"), ("Giuliani gets medal", "Trump awards civilian honour"), ("O'Hare radar outage", "Flights delayed on Thanksgiving eve"), ("COP31: no deal", "Pope warns; 90+ nations pledge"), ("Shenzhou-24 docks", "First foreign astronaut on Tiangong"), ("Colombia hostages freed", "Cartagena siege ends; one captor killed")]
+    x0, y0, cw, ch = 24, 632, 238, 42
+    for i, (head, body) in enumerate(cards):
+        col, row = i % 4, i // 4
+        x, y = x0 + col * 246, y0 + row * 47
+        d.rounded_rectangle((x, y, x + cw, y + ch), 5, fill=WHITE, outline=(210, 216, 223), width=1)
+        card_icon(d, x + 3, y + 1, i)
+        txt(d, (x + 51, y + 4), head, fit_text(d, head, 181, 10, True), NAVY)
+        txt(d, (x + 51, y + 22), body, font(8), MUTED, width=180)
+    d.rounded_rectangle((24, 807, 1000, 946), 6, fill=(250, 247, 241), outline=(218, 180, 140), width=1)
+    txt(d, (40, 815), "20 MORE STORIES", font(11, True), RED)
+    briefs = ["Trump pardons turkeys Freedom + Feathers", "Nepal PM Balendra Shah visits India", "Senegal AFCON title restored on appeal", "Israeli military suicides at 16-year high", "Gaza humanitarian strain", "EU adds Russia sanctions", "US-Qatar strategic talks", "RFE/RL shortwave returns for Afghan girls", "Iran winter gas shortages", "Houthis 60 km from Aden", "Abrego Garcia leaves for Spain", "Sweden Kristersson PM vote", "Thomas Markle indicted", "California king tides", "Super El Nino threat to Africa", "US Army lead azide warning", "UK age-of-consent consultation", "UK nuclear test veterans panel", "Fort Hood execution stay request", "Zelenskyy EUR115bn ask; Patriot pause"]
+    for i, brief in enumerate(briefs):
+        col, row = i % 2, i // 2
+        txt(d, (40 + col * 475, 838 + row * 10), brief, font(8), INK, width=450)
+    d.rounded_rectangle((24, 954, 1000, 990), 5, fill=(255, 239, 239), outline=RED, width=2)
+    txt(d, (38, 959), "DATE CHECK [OK] Every story on this page happened, or was first reported, on Wednesday 25 November 2026.", font(8, True), RED, width=940)
+    txt(d, (38, 974), "LEFT OUT AS EARLIER DAYS' NEWS: Anthropic IPO debut close (Thu 19 Nov) | Senate 51-48 Iran vote (Thu 19 Nov) | GTA VI launch (Thu 19 Nov).", font(7), MUTED, width=940)
+    d.rectangle((24, 997, 1000, 1000), fill=GOLD)
+    im.save("entry.png", format="PNG", optimize=True)
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()
