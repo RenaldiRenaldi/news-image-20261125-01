@@ -105,16 +105,20 @@ def main():
     ]
     for coast in coastlines:
         d.polygon([project(lon, lat) for lon, lat in coast], fill=LAND, outline=(125, 135, 145))
-    labels = [("NORTH AMERICA", -125, 18), ("SOUTH AMERICA", -62, -38), ("EUROPE", 18, 60), ("AFRICA", 20, -27), ("ASIA", 92, 34), ("OCEANIA", 137, -45)]
+    labels = [("NORTH AMERICA", -125, 18), ("SOUTH AMERICA", -62, -38), ("EUROPE", -55, 67), ("AFRICA", 20, -27), ("ASIA", 92, 34), ("OCEANIA", 137, -45)]
     for lab, lon, lat in labels:
         x, y = project(lon, lat)
         txt(d, (x, y), lab, font(9, True), BLUE)
-    dots = [("1 Langley", -77.4, 38.9, 10, -10), ("2 Moscow", 37.6, 55.8, 10, -17), ("3 Kyiv", 30.5, 50.4, 10, 5), ("4 New York", -74.0, 40.7, 10, 7), ("5 Riyadh", 46.7, 24.7, 10, 7), ("6 Hormuz", 56.3, 26.6, 10, -16), ("7 Akwe", 29.5, 1.5, 10, 7), ("8 Warsaw", 21.0, 52.2, -50, -18), ("9 Copenhagen", 12.6, 55.7, -62, -3), ("10 Paris", 2.35, 48.9, -48, 12), ("11 Benghazi", 20.1, 32.1, 10, 7), ("12 Caracas", -66.9, 10.5, 10, 7), ("13 Canberra", 149.1, -35.3, 10, 7)]
+    dots = [("1 Langley", -77.4, 38.9, 10, -10), ("2 Moscow", 37.6, 55.8, 10, -17), ("3 Kyiv", 30.5, 50.4, 10, 5), ("4 New York", -74.0, 40.7, 10, 7), ("5 Riyadh", 46.7, 24.7, 10, 7), ("6 Hormuz", 56.3, 26.6, 10, -16), ("7 Akwe", 29.5, 1.5, 10, 7), ("8 Warsaw", 21.0, 52.2, -62, -25), ("9 Copenhagen", 12.6, 55.7, -84, -10), ("10 Paris", 2.35, 48.9, -48, 14), ("11 Benghazi", 20.1, 32.1, 10, 7), ("12 Caracas", -66.9, 10.5, 10, 7), ("13 Canberra", 149.1, -35.3, 10, 7)]
     for label, lon, lat, dx, dy in dots:
         x, y = project(lon, lat)
         d.ellipse((x - 4, y - 4, x + 4, y + 4), fill=RED, outline=WHITE, width=1)
         if dx < 0:
-            d.line((x, y, x + dx + 44, y + dy + 5), fill=RED, width=1)
+            if label in {"8 Warsaw", "9 Copenhagen", "10 Paris"}:
+                label_width = d.textbbox((0, 0), label, font=font(8, True))[2]
+                d.line((x, y, x + dx + label_width + 4, y + dy + 5), fill=RED, width=1)
+            else:
+                d.line((x, y, x + dx + 44, y + dy + 5), fill=RED, width=1)
         txt(d, (x + dx, y + dy), label, font(8, True), NAVY)
     cards = [("Nvidia -5.9%", "Monday +31.5%; chip sell-off spreads"), ("Two tankers hit Hormuz", "IRGC says mines; not confirmed"), ("Dell doubles sales", "$54.9B, +103%; AI backlog $132B"), ("Ukraine hits two refineries", "Syzran and Kuibyshev ablaze; 1 killed"), ("Kyiv block death toll 11", "Russian drone attack rescue"), ("WHO evacuates Akwe", "Ebola team moved amid fighting"), ("NATO AWACS to Poland", "Forward deployment after missiles"), ("Denmark ghetto law upheld", "Supreme Court, 91 leases"), ("Sarkozy to trial", "Corruption hearing set for Apr 2027"), ("Giuliani gets medal", "Trump awards civilian honour"), ("O'Hare radar outage", "Flights delayed on Thanksgiving eve"), ("COP31: no deal", "Pope warns; 90+ nations pledge"), ("Shenzhou-24 docks", "First foreign astronaut on Tiangong"), ("Colombia hostages freed", "Cartagena siege ends; one captor killed")]
     x0, y0, cw, ch = 24, 632, 238, 42
