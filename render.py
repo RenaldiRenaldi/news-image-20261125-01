@@ -105,7 +105,7 @@ def main():
     ]
     for coast in coastlines:
         d.polygon([project(lon, lat) for lon, lat in coast], fill=LAND, outline=(125, 135, 145))
-    labels = [("NORTH AMERICA", -125, 18), ("SOUTH AMERICA", -62, -38), ("EUROPE", -55, 67), ("AFRICA", 20, -27), ("ASIA", 92, 34), ("OCEANIA", 137, -45)]
+    labels = [("NORTH AMERICA", -125, 18), ("SOUTH AMERICA", -62, -38), ("EUROPE", -55, 67), ("AFRICA", 20, -27), ("ASIA", 92, 34), ("OCEANIA", 118, -45)]
     for lab, lon, lat in labels:
         x, y = project(lon, lat)
         txt(d, (x, y), lab, font(9, True), BLUE)
