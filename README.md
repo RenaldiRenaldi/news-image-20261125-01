@@ -4,10 +4,10 @@ This entry is a single 1024x1024 front page covering 38 verified stories across 
 
 Run locally with `python3 render.py`, then use `MAKEFUN_OUTPUT_DIR=out node main.ts` to copy the finished `entry.png` into the server output directory.
 
-[Competition badge](https://make.fun/badge/news-image-20261125.svg) linked to [the competition](https://make.fun/bounty/news-image-20261125)
+![Competition](https://make.fun/badge/news-image-20261125.svg)
 
-[Rank badge](https://make.fun/badge/news-image-20261125/RenaldiRenaldi/news-image-20261125-01/rank.svg) linked to [the leaderboard](https://make.fun/bounty/news-image-20261125)
+![Rank](https://make.fun/badge/news-image-20261125/RenaldiRenaldi/news-image-20261125-01/rank.svg)
 
-[Reward badge](https://make.fun/badge/news-image-20261125/RenaldiRenaldi/news-image-20261125-01/reward.svg) linked to [the bounty](https://make.fun/bounty/news-image-20261125)
+![Reward](https://make.fun/badge/news-image-20261125/RenaldiRenaldi/news-image-20261125-01/reward.svg)
 
 [Bounty page](https://make.fun/bounty/news-image-20261125)
